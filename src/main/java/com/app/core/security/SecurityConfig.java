@@ -1,7 +1,9 @@
 package com.app.core.security;
 
 import java.util.Arrays;
+import java.util.List;
 
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationProvider;
@@ -18,7 +20,6 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 import lombok.RequiredArgsConstructor;
-
 import static org.springframework.http.HttpMethod.*;
 
 import static com.app.core.security.entity. Role.ADMIN;
@@ -48,6 +49,9 @@ public class SecurityConfig {
 	private final JwtAuthenticationFilter jwtAuthenticationFilter;
 	private final AuthenticationProvider authenticationProvider;
 	private final LogoutHandler logoutHandler;
+	
+	@Value("${security.allowedOrigins}")
+	private final List<String> allowedOrigins;
 
 	@Bean
 	SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
@@ -86,10 +90,10 @@ public class SecurityConfig {
 	}
 
 	@Bean
-	CorsConfigurationSource corsConfigurationSource() {
-		CorsConfiguration configuration = new CorsConfiguration();
-		configuration.setAllowedOrigins(Arrays.asList("http://localhost:3000","http://localhost:61946"));
-		configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PATCH", "PUT", "DELETE", "OPTIONS", "HEAD"));
+	CorsConfigurationSource corsConfigurationSource( ) {
+		CorsConfiguration configuration = new CorsConfiguration();		
+		configuration.setAllowedOrigins(allowedOrigins);
+		configuration.setAllowedMethods(Arrays.asList(GET.name(), POST.name(), PATCH.name(), PUT.name(), DELETE.name(), OPTIONS.name(), HEAD.name()));
 		configuration.setAllowCredentials(true);
 		configuration.setAllowedHeaders(Arrays.asList("Authorization", "Requestor-Type","Content-Type"));
 		configuration.setExposedHeaders(Arrays.asList("X-Get-Header"));		
