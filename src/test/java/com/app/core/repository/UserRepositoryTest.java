@@ -17,11 +17,13 @@ import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabas
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
 import org.springframework.test.context.TestPropertySource;
+import org.springframework.transaction.annotation.Transactional;
 
 import com.app.core.entity.model.UserModel;
 
 @DataJpaTest
-@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE) 
+@Transactional
+@AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
 @TestPropertySource(properties = {
         "spring.datasource.url=jdbc:postgresql://localhost:5432/db_api_core",
         "spring.datasource.username=postgres",
@@ -36,6 +38,8 @@ public class UserRepositoryTest {
 
 	@BeforeEach
 	void setUp() {
+		// Clear all existing data before each test to ensure isolation
+		userRepository.deleteAll();
 		persistDemoUsers();
 	}
 	
