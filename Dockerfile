@@ -9,11 +9,13 @@ RUN apk add --no-cache maven
 # Copiar archivos de configuración del proyecto
 COPY pom.xml .
 
+RUN mvn clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repackage.skip
+
 # Copiar código fuente
 COPY src src
 
 # Ejecutar Maven para compilar y empaquetar
-RUN mvn clean package -DskipTests
+RUN mvn clean package -DskipTests -Ppostgresql
 
 # Etapa 2: Ejecución de la aplicación
 FROM eclipse-temurin:21-jdk-alpine
@@ -27,4 +29,4 @@ COPY --from=builder /build/target/ecommerce-backend-0.0.1-SNAPSHOT.jar java-app.
 EXPOSE 8080
 
 # Comando para ejecutar la aplicación
-ENTRYPOINT ["java", "-jar", "java-app.jar"]
+ENTRYPOINT ["java", "-jar","java-app.jar"]
