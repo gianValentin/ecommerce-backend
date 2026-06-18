@@ -25,4 +25,4 @@ jobs:
         run: docker build -t ecommerce .
 
       - name: Push the Docker image
-        run: docker push giancarlovalentin/ecommerce
+        run: docker push giancarlovalentin/ecommerce:latest
