@@ -23,6 +23,7 @@ jobs:
 
       - name: Build the Docker image
         run: docker build -t ecommerce .
-
+      - name: Tag the Docker image
+        run: docker tag ecommerce giancarlovalentin/ecommerce:latest
       - name: Push the Docker image
         run: docker push giancarlovalentin/ecommerce:latest
