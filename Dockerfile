@@ -15,7 +15,7 @@ RUN mvn clean package -Dmaven.test.skip -Dmaven.main.skip -Dspring-boot.repackag
 COPY src src
 
 # Ejecutar Maven para compilar y empaquetar
-RUN mvn clean package -DskipTests -Ppostgresql
+RUN mvn clean package -DskipTests -Ph2
 
 # Etapa 2: Ejecución de la aplicación
 FROM eclipse-temurin:21-jdk-alpine
