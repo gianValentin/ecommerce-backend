@@ -22,6 +22,7 @@ import com.app.core.exception.CECartException;
 import com.app.core.exception.CJNotFoundException;
 import com.app.core.repository.CartRepository;
 import com.app.core.security.entity.Role;
+import com.app.core.service.NotificationService;
 import com.app.core.service.OrderService;
 import com.app.core.service.UserService;
 import com.app.core.utils.Constant;
@@ -38,6 +39,7 @@ public class DefaultOrderService implements OrderService {
 	private final CartRepository cartRepository;
 	private final UserService userService;
 	private final ModelMapper modelMapper;
+	private final NotificationService notificationService;
 
 
 	@Override
@@ -95,6 +97,7 @@ public class DefaultOrderService implements OrderService {
 		cartSession.setType(CType.ORDER);
 		
 		CartModel orderGenerate = cartRepository.save(cartSession);
+		notificationService.notifyOrderGenerated(orderGenerate);
 		log.info("[Commerce]: order generated from shopping cart with id "+orderGenerate.getId());
 		return  orderGenerate;
 	}	
