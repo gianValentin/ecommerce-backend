@@ -16,19 +16,18 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.jdbc.AutoConfigureTestDatabase;
 import org.springframework.boot.test.autoconfigure.orm.jpa.DataJpaTest;
 import org.springframework.boot.test.autoconfigure.orm.jpa.TestEntityManager;
-import org.springframework.test.context.TestPropertySource;
 import org.springframework.transaction.annotation.Transactional;
 
 import com.app.core.entity.model.UserModel;
 
+/**
+ * Usa el datasource definido por el perfil Maven activo (h2 o postgresql),
+ * tal como lo hace la aplicacion en runtime. Ejecutar con:
+ * ./mvnw test -Ph2 (default) o ./mvnw test -Ppostgresql
+ */
 @DataJpaTest
 @Transactional
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@TestPropertySource(properties = {
-        "spring.datasource.url=jdbc:postgresql://localhost:5432/db_api_core",
-        "spring.datasource.username=postgres",
-        "spring.datasource.password=1234"
-})
 public class UserRepositoryTest {
 
 	@Autowired
