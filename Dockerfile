@@ -28,8 +28,5 @@ WORKDIR /app
 # Copiar el JAR compilado desde la etapa anterior
 COPY --from=builder /build/target/*.jar java-app.jar
 
-# Exponer puerto de la aplicación
-EXPOSE 8080
-
 # Comando para ejecutar la aplicación
 ENTRYPOINT ["java", "-jar","java-app.jar"]
