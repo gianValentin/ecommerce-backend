@@ -145,9 +145,9 @@ public class DefaultCartService implements CartService{
 	public void calculateCart(CartModel cartModel) {
 		Assert.notNull(cartModel, "Cart cannot be null");
 		
-		AtomicReference<Double> subTotal = new AtomicReference<>(Double.valueOf(0.0f));
-		AtomicReference<Double> discount = new AtomicReference<>(Double.valueOf(0.0f));
-		AtomicReference<Double> total = new AtomicReference<>(Double.valueOf(0.0f));		
+		AtomicReference<Double> subTotal = new AtomicReference<>(0.0);
+		AtomicReference<Double> discount = new AtomicReference<>(0.0);
+		AtomicReference<Double> total = new AtomicReference<>(0.0);
 		
 		// If cart is empty, set sub total, discount and total in zero
 		if(CollectionUtils.isEmpty(cartModel.getEntries())) {

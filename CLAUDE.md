@@ -45,7 +45,7 @@ El proyecto tiene dos perfiles Maven que controlan la base de datos:
 
 El perfil activo se inyecta en `application.properties` via `@activatedProperties@` y activa el archivo `application-{profile}.properties` correspondiente.
 
-Con H2 activo, la consola web está disponible en `http://localhost:8080/my-console`.
+El puerto HTTP es `8082` por defecto y se cambia con `PORT`. Con H2 activo, la consola web está disponible en `http://localhost:8082/my-console`; Docker publica el puerto 8082 del contenedor en el 8080 del host.
 
 Variables de entorno para PostgreSQL: `PROD_DB_HOST`, `PROD_DB_PORT`, `PROD_DB_NAME`, `PROD_DB_USERNAME`, `PROD_DB_PASSWORD`.
 
@@ -72,7 +72,7 @@ utils/            → Utilidades (ObjectMapperUtils, Constant, CustomCodeExcepti
 La seguridad está separada en su propio subpaquete:
 
 - **`SecurityUser`** extiende `UserModel` e implementa `UserDetails` de Spring Security.
-- **`SecurityConfig`** tiene dos `SecurityFilterChain` beans separados, uno por perfil (`@Profile("h2")` y `@Profile("postgresql")`), porque el perfil H2 requiere `MvcRequestMatcher` para que el H2 console sea accesible.
+- **`SecurityH2Config`** y **`SecurityPostgresqlConfig`** definen `SecurityFilterChain` separadas por perfil (`h2` y `postgresql`); solo la cadena H2 permite la consola con `PathRequest.toH2Console()`.
 - Los JWT se gestionan con `JwtAuthenticationFilter` + `DefaultJwtService`. Los tokens se persisten en la tabla `Token` y se revocan en cada nuevo login.
 - **Roles**: `ANONYMOUS`, `USER`, `ADMIN`, `MANAGER`. Los endpoints de escritura de productos, categorías y usuarios requieren `ADMIN`.
 - El endpoint `/api/v1/cart/**` es público (sin autenticación).
@@ -96,6 +96,6 @@ La seguridad está separada en su propio subpaquete:
 
 ### API y documentación
 
-- Base URL: `http://localhost:8080/api/v1/`
-- Swagger UI disponible en: `http://localhost:8080/swagger-ui/index.html`
+- Base URL: `http://localhost:8082/api/v1/`
+- Swagger UI disponible en: `http://localhost:8082/swagger-ui/index.html`
 - Los controllers están anotados con `@Tag` y `@Operation` de SpringDoc OpenAPI.
