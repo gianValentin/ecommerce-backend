@@ -54,9 +54,8 @@ public class ProductModel {
 	@JoinColumn(name = "price_id", referencedColumnName = "id")
 	private PriceModel price;
 	
-	@JsonIgnoreProperties(value = {"examen"}, allowSetters = true)
-	 @OneToMany (cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
-	 private Set<ImageModel> images;
+	@OneToMany(mappedBy = "product", cascade = CascadeType.ALL, fetch = FetchType.LAZY, orphanRemoval = true)
+	private Set<ImageModel> images;
 
 	@PrePersist
 	private void prePersist() {

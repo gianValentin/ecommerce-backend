@@ -1,0 +1,10 @@
+# AGENTS.md
+
+- Proyecto Maven monomódulo, Java 21 / Spring Boot 3.5; entrypoint `com.app.core.EcommmerceApplication`. Código y tests están bajo `src/{main,test}/java/com/app/core`.
+- Verificación: `./mvnw test`; un test: `./mvnw test -Dtest=DefaultCartServiceTest` (o `-Dtest=Clase#metodo`). CI construye y publica una imagen Docker sin un paso de tests dedicado; el `Dockerfile` ejecuta `./mvnw clean package`, que sí corre los tests.
+- Ejecución local: `./mvnw spring-boot:run -Ph2` (perfil H2 activo por defecto) o `./mvnw spring-boot:run -Ppostgresql`. PostgreSQL lee `PROD_DB_HOST`, `PROD_DB_PORT`, `PROD_DB_NAME`, `PROD_DB_USERNAME`, `PROD_DB_PASSWORD`; el puerto HTTP usa `PORT` (8082 por defecto). Docker publica `8080` en el host hacia `8082` en el contenedor. SQL de inicialización por perfil: `src/main/resources/data-{h2,postgresql}.sql`.
+- Capas principales: REST en `controller`, contratos en `service` e implementaciones en `service/impl`, persistencia en `repository`, entidades en `entity/model`, DTOs en `entity/dto`; seguridad JWT separada en `security`. Es una sola aplicación, no un workspace multi-módulo.
+- `SecurityH2Config` (`@Profile("h2")`) y `SecurityPostgresqlConfig` (`@Profile("postgresql")`) definen cadenas JWT stateless separadas. Auth y `/api/v1/cart/**` son públicos; también los GET de productos/categorías. Operaciones de escritura de productos y usuarios requieren `ADMIN`; otros endpoints requieren autenticación salvo reglas explícitas.
+- El carrito anónimo pertenece a un usuario `ANONYMOUS`; al acceder con usuario autenticado, su carrito puede fusionarse con el de sesión y se elimina el anónimo. Al generar una orden se notifica por WebSocket STOMP (`/ws`, destino de usuario `/queue/orders`).
+- ModelMapper usa estrategia `STRICT`; para validar cada elemento de una lista recibida en un body se usa `ValidList<T>` junto con `@Valid`. Los errores de validación y de negocio se centralizan en `exception/ControllerAdvice`.
+- `docker-compose.yml` no pasa las variables `PROD_DB_*` que consume el perfil PostgreSQL; para desarrollo local usa Maven con H2. Swagger UI: `/swagger-ui/index.html`.

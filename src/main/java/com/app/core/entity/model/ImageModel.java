@@ -34,7 +34,6 @@ public class ImageModel {
 	
 	private String url;
 	
-	@JsonIgnoreProperties(value = {"images"})
 	@ManyToOne(fetch = FetchType.LAZY)
 	@JoinColumn(name = "images_id")
 	private ProductModel product;
