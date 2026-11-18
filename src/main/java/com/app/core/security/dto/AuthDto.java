@@ -1,6 +1,7 @@
 package com.app.core.security.dto;
 
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonIgnore;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;
@@ -13,7 +14,11 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 public class AuthDto {
 	@JsonProperty("access_token")
-	  private String accessToken;
-	  @JsonProperty("refresh_token")
-	  private String refreshToken;
+	private String accessToken;
+	private String username;
+	private String role;
+	@JsonIgnore
+	private String refreshToken;
+	@JsonIgnore
+	private boolean remember;
 }

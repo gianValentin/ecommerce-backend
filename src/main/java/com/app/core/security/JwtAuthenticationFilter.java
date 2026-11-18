@@ -8,6 +8,7 @@ import org.springframework.security.authentication.UsernamePasswordAuthenticatio
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
+import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.security.web.authentication.WebAuthenticationDetailsSource;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
@@ -21,6 +22,7 @@ import jakarta.servlet.ServletException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import lombok.RequiredArgsConstructor;
+import io.jsonwebtoken.JwtException;
 
 @Component
 @RequiredArgsConstructor
@@ -54,21 +56,32 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 			return;
 		}
 
-		username = jwtService.extractUsernameFromToken(jwt);
-
-		if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
-			UserDetails userDetails = userDetailsService.loadUserByUsername(username);
-
-			boolean isTokenValid = tokenRepository.findByToken(jwt)
-					.map(t -> !t.isExpired() && !t.isRevoked())
-					.orElse(false);
-
-			if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
-				UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, null,
-						userDetails.getAuthorities());
-				authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
-				SecurityContextHolder.getContext().setAuthentication(authToken);
+		try {
+			username = jwtService.extractUsernameFromToken(jwt);
+			if (!jwtService.isAccessToken(jwt)) {
+				response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid access token");
+				return;
 			}
+
+			if (username != null && SecurityContextHolder.getContext().getAuthentication() == null) {
+				UserDetails userDetails = userDetailsService.loadUserByUsername(username);
+
+				boolean isTokenValid = tokenRepository.findByToken(jwt)
+						.map(token -> token.getTokenType() == com.app.core.security.entity.TokenType.BEARER
+								&& !token.isExpired() && !token.isRevoked())
+						.orElse(false);
+
+				if (jwtService.isTokenValid(jwt, userDetails) && isTokenValid) {
+					UsernamePasswordAuthenticationToken authToken = new UsernamePasswordAuthenticationToken(username, null,
+							userDetails.getAuthorities());
+					authToken.setDetails(new WebAuthenticationDetailsSource().buildDetails(request));
+					SecurityContextHolder.getContext().setAuthentication(authToken);
+				}
+			}
+		} catch (JwtException | IllegalArgumentException | UsernameNotFoundException exception) {
+			SecurityContextHolder.clearContext();
+			response.sendError(HttpServletResponse.SC_UNAUTHORIZED, "Invalid access token");
+			return;
 		}
 
 		filterChain.doFilter(request, response);

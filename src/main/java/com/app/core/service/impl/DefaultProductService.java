@@ -18,6 +18,7 @@ import com.app.core.entity.dto.product.SaveProductDTO;
 import com.app.core.entity.dto.product.UpdateProductDTO;
 import com.app.core.entity.model.ProductModel;
 import com.app.core.exception.CJNotFoundException;
+import com.app.core.repository.CategoryRepository;
 import com.app.core.repository.ProductRepository;
 import com.app.core.service.ProductService;
 import com.app.core.utils.CustomCodeException;
@@ -30,18 +31,23 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 public class DefaultProductService implements ProductService {
 
-	private final ProductRepository productRepository;	
+	private final ProductRepository productRepository;
+	private final CategoryRepository categoryRepository;
 	private final ModelMapper modelMapper;
 	
 	@Override
 	@Transactional(readOnly = true)
 	public Page<ResponseProductDTO> getAll(Long categoryId, Pageable pageable) {
 		Assert.notNull(pageable, "pageable cannot be null");
-		Page<ProductModel> products ;
+		Page<ProductModel> products;
 		if(categoryId == null) {
 			products = productRepository.findAll(pageable);
 		}else {
-			products = productRepository.findProductByCategoryId(categoryId, pageable);
+			List<Long> categoryIds = categoryRepository.findCategoryTreeIds(categoryId);
+			if (categoryIds.isEmpty()) {
+				return Page.empty(pageable);
+			}
+			products = productRepository.findProductsByCategoryIds(categoryIds, pageable);
 		}
 		return  products.map(product -> modelMapper.map(product, ResponseProductDTO.class));		
 	}
@@ -53,7 +59,11 @@ public class DefaultProductService implements ProductService {
 		if(categoryId == null) {
 			products = productRepository.findAll();
 		}else {
-			products = productRepository.findProductByCategoryId(categoryId);
+			List<Long> categoryIds = categoryRepository.findCategoryTreeIds(categoryId);
+			if (categoryIds.isEmpty()) {
+				return List.of();
+			}
+			products = productRepository.findProductsByCategoryIds(categoryIds);
 		}
 		return  products.stream().map(product -> modelMapper.map(product, ResponseProductDTO.class)).collect(Collectors.toList());		
 	}

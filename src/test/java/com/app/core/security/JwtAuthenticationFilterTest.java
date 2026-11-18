@@ -101,6 +101,7 @@ public class JwtAuthenticationFilterTest {
 		Token storedToken = Token.builder().token(VALID_JWT).expired(false).revoked(false).build();
 
 		Mockito.when(jwtService.extractUsernameFromToken(VALID_JWT)).thenReturn(USERNAME);
+		Mockito.when(jwtService.isAccessToken(VALID_JWT)).thenReturn(true);
 		Mockito.when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(userDetails);
 		Mockito.when(tokenRepository.findByToken(VALID_JWT)).thenReturn(Optional.of(storedToken));
 		Mockito.when(jwtService.isTokenValid(VALID_JWT, userDetails)).thenReturn(true);
@@ -122,6 +123,7 @@ public class JwtAuthenticationFilterTest {
 		Token storedToken = Token.builder().token(VALID_JWT).expired(false).revoked(true).build();
 
 		Mockito.when(jwtService.extractUsernameFromToken(VALID_JWT)).thenReturn(USERNAME);
+		Mockito.when(jwtService.isAccessToken(VALID_JWT)).thenReturn(true);
 		Mockito.when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(userDetails);
 		Mockito.when(tokenRepository.findByToken(VALID_JWT)).thenReturn(Optional.of(storedToken));
 		Mockito.when(jwtService.isTokenValid(VALID_JWT, userDetails)).thenReturn(true);
@@ -142,6 +144,7 @@ public class JwtAuthenticationFilterTest {
 		UserDetails userDetails = new User(USERNAME, "1234", List.of());
 
 		Mockito.when(jwtService.extractUsernameFromToken(VALID_JWT)).thenReturn(USERNAME);
+		Mockito.when(jwtService.isAccessToken(VALID_JWT)).thenReturn(true);
 		Mockito.when(userDetailsService.loadUserByUsername(USERNAME)).thenReturn(userDetails);
 		Mockito.when(tokenRepository.findByToken(VALID_JWT)).thenReturn(Optional.empty());
 
@@ -149,5 +152,21 @@ public class JwtAuthenticationFilterTest {
 
 		assertNull(SecurityContextHolder.getContext().getAuthentication());
 		verify(filterChain).doFilter(request, response);
+	}
+
+	@Test
+	@DisplayName("Rejects a refresh token presented as an API access token")
+	void doFilterInternalRejectsRefreshToken() throws Exception {
+		MockHttpServletRequest request = new MockHttpServletRequest("GET", "/api/v1/user/session");
+		request.addHeader("Authorization", "Bearer " + VALID_JWT);
+		MockHttpServletResponse response = new MockHttpServletResponse();
+		Mockito.when(jwtService.extractUsernameFromToken(VALID_JWT)).thenReturn(USERNAME);
+		Mockito.when(jwtService.isAccessToken(VALID_JWT)).thenReturn(false);
+
+		filter.doFilterInternal(request, response, filterChain);
+
+		org.junit.jupiter.api.Assertions.assertEquals(401, response.getStatus());
+		Mockito.verifyNoInteractions(userDetailsService, tokenRepository);
+		org.mockito.Mockito.verifyNoInteractions(filterChain);
 	}
 }

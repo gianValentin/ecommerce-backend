@@ -1,13 +1,10 @@
 package com.app.core.security.service;
 
-import java.io.IOException;
-
 import com.app.core.security.dto.AuthDto;
 import com.app.core.security.dto.LoginDto;
 import com.app.core.security.dto.RegisterDto;
 
 import jakarta.servlet.http.HttpServletRequest;
-import jakarta.servlet.http.HttpServletResponse;
 
 public interface AuthService {
 
@@ -15,7 +12,9 @@ public interface AuthService {
 
 	AuthDto register(RegisterDto dto);
 	
-	void refreshToken(final HttpServletRequest request, final HttpServletResponse response) throws IOException;
+	AuthDto refreshToken(final HttpServletRequest request);
+
+	void logout(final HttpServletRequest request);
 	
 	boolean isUsernameValid(String username);
 }

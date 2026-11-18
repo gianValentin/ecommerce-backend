@@ -31,12 +31,15 @@ public class CategoryRepositoryTest {
 	@Autowired
 	private CategoryRepository categoryRepository;
 	@Autowired
+	private ProductRepository productRepository;
+	@Autowired
 	private TestEntityManager testEntityManager;
 
 	private Long categoryElectronicsId;
 
 	@BeforeEach
 	void setUp() {
+		productRepository.deleteAll();
 		categoryRepository.deleteAll();
 		persistDemoCategories();
 	}
@@ -87,6 +90,19 @@ public class CategoryRepositoryTest {
 		assertThat(categorySaved).isNotNull();
 		assertThat(categorySaved.getId()).isNotNull();
 		assertThat(categorySaved.getCreateAt()).isNotNull();
+	}
+
+	@Test
+	@DisplayName("Find category tree ids includes master, subcategories and nested descendants")
+	public void findCategoryTreeIdsIncludesDescendants() {
+		CategoryModel master = testEntityManager.persist(CategoryModel.builder().name("Electronics").build());
+		CategoryModel subcategory = testEntityManager.persist(CategoryModel.builder().name("Computers").parent(master).build());
+		CategoryModel leaf = testEntityManager.persist(CategoryModel.builder().name("Laptops").parent(subcategory).build());
+		testEntityManager.flush();
+
+		List<Long> categoryIds = categoryRepository.findCategoryTreeIds(master.getId());
+
+		assertThat(categoryIds).containsExactlyInAnyOrder(master.getId(), subcategory.getId(), leaf.getId());
 	}
 
 	@Test

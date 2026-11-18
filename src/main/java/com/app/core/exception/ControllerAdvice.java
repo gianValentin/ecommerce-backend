@@ -6,8 +6,10 @@ import java.util.stream.Collectors;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.AuthenticationException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
@@ -28,6 +30,24 @@ public class ControllerAdvice {
 		ArgumentNotValidDto argumentNotValidDto = ArgumentNotValidDto.builder().code(CustomCodeException.CODE_500)
 				.errors(erros).build();
 		return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(argumentNotValidDto);
+	}
+
+	@ExceptionHandler(ResponseStatusException.class)
+	public ResponseEntity<ErrorDto> responseStatusExceptionHandler(ResponseStatusException exception) {
+		ErrorDto error = ErrorDto.builder()
+				.code(exception.getStatusCode().toString())
+				.message(exception.getReason())
+				.build();
+		return ResponseEntity.status(exception.getStatusCode()).body(error);
+	}
+
+	@ExceptionHandler(AuthenticationException.class)
+	public ResponseEntity<ErrorDto> authenticationExceptionHandler(AuthenticationException exception) {
+		ErrorDto error = ErrorDto.builder()
+				.code(HttpStatus.UNAUTHORIZED.toString())
+				.message("Invalid username or password")
+				.build();
+		return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(error);
 	}
 
 	@ExceptionHandler(value = RuntimeException.class)

@@ -115,6 +115,17 @@ public class ProductRepositoryTest {
 	}
 
 	@Test
+	@DisplayName("Find products for a category tree includes products from subcategories")
+	public void findProductsByCategoryIdsIncludesSubcategoryProducts() {
+		CategoryModel subcategory = testEntityManager.persist(CategoryModel.builder().name("Laptops").parent(category).build());
+		persistDemoProduct("PR002", "Gaming laptop", subcategory);
+
+		List<ProductModel> products = productRepository.findProductsByCategoryIds(List.of(category.getId(), subcategory.getId()));
+
+		assertThat(products).extracting(ProductModel::getCode).containsExactlyInAnyOrder("PR001", "PR002");
+	}
+
+	@Test
 	@DisplayName("Save product case success")
 	public void saveProductCaseSuccess() {
 		ProductModel newProduct = ProductModel.builder()

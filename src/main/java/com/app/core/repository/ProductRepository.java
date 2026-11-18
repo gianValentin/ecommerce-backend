@@ -1,5 +1,6 @@
 package com.app.core.repository;
 
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -7,6 +8,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 import com.app.core.entity.model.ProductModel;
 
@@ -26,6 +28,12 @@ public interface ProductRepository  extends JpaRepository<ProductModel, Long>{
 			where c.id = :categoryId \s
 			""")
 	List<ProductModel> findProductByCategoryId(Long categoryId);
+
+	@Query("select p from ProductModel p where p.category.id in :categoryIds")
+	Page<ProductModel> findProductsByCategoryIds(@Param("categoryIds") Collection<Long> categoryIds, Pageable pageable);
+
+	@Query("select p from ProductModel p where p.category.id in :categoryIds")
+	List<ProductModel> findProductsByCategoryIds(@Param("categoryIds") Collection<Long> categoryIds);
 
 	boolean existsProductByCode(String code);
 }

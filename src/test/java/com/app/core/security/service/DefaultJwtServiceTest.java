@@ -23,7 +23,7 @@ import com.app.core.security.service.impl.DefaultJwtService;
 public class DefaultJwtServiceTest {
 
 	private static final String SECRET_KEY =
-			"586E3272357538782F413F4428472B4B6250655368566B597033733676397924";
+			"VEhJU19JU19OT1RfQV9URVNUX0pXVF9LRVlfMzJfQllURVNfTE9OR19FTk9VR0g=";
 
 	private DefaultJwtService jwtService;
 	private SecurityUser user;
@@ -50,6 +50,8 @@ public class DefaultJwtServiceTest {
 
 		assertNotNull(token);
 		assertEquals(user.getUsername(), jwtService.extractUsernameFromToken(token));
+		assertTrue(jwtService.isAccessToken(token));
+		assertFalse(jwtService.isRefreshToken(token));
 	}
 
 	@Test
@@ -64,6 +66,18 @@ public class DefaultJwtServiceTest {
 		var refreshExpiration = jwtService.getClaim(refreshToken, Claims::getExpiration);
 
 		assertTrue(refreshExpiration.after(accessExpiration));
+		assertFalse(jwtService.isRememberMeToken(refreshToken));
+		assertFalse(jwtService.isAccessToken(refreshToken));
+		assertTrue(jwtService.isRefreshToken(refreshToken));
+	}
+
+	@Test
+	@DisplayName("Refresh token carries the remember-me policy for cookie renewal")
+	void refreshTokenPreservesRememberMePolicy() {
+		String token = jwtService.getRefreshToken(user, true);
+
+		assertTrue(jwtService.isRefreshToken(token));
+		assertTrue(jwtService.isRememberMeToken(token));
 	}
 
 	@Test

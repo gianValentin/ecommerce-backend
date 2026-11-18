@@ -13,4 +13,5 @@ public class ResponseCategoryDTO {
 	private Long id;
 	private String name;
 	private Date createAt;
+	private Long parentId;
 }

@@ -33,21 +33,21 @@ public class DefaultCategoryService implements CategoryService{
 	public Page<ResponseCategoryDTO> getAll(Pageable pageable) {
 		Assert.notNull(pageable, "pageable cannot be null");
 		Page<CategoryModel> categories = categoryRepository.findAll(pageable);
-		return  categories.map(category -> modelMapper.map(category, ResponseCategoryDTO.class));		
+		return categories.map(this::toResponse);
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public List<ResponseCategoryDTO> getAll() {
 		List<CategoryModel> categories = categoryRepository.findAll();
-		return  categories.stream().map(category -> modelMapper.map(category, ResponseCategoryDTO.class)).collect(Collectors.toList());		
+		return categories.stream().map(this::toResponse).collect(Collectors.toList());
 	}
 
 	@Override
 	@Transactional(readOnly = true)
 	public ResponseCategoryDTO findById(Long id) {
 		CategoryModel categoryFound = categoryRepository.findById(id).orElseThrow(() -> new CJNotFoundException(CustomCodeException.CODE_404, MessageFormat.format("Category with id [{0}] not Found", id)));
-		return modelMapper.map(categoryFound, ResponseCategoryDTO.class);
+		return toResponse(categoryFound);
 	}
 
 	@Override
@@ -56,10 +56,11 @@ public class DefaultCategoryService implements CategoryService{
 		Assert.notNull(categoryDTO, "category cannot be null");
 		
 		CategoryModel categoryModel = modelMapper.map(categoryDTO, CategoryModel.class);
+		categoryModel.setParent(resolveParent(categoryDTO.getParentId()));
 		
 		CategoryModel categoryDb = categoryRepository.save(categoryModel);
 		
-		return modelMapper.map(categoryDb, ResponseCategoryDTO.class);
+		return toResponse(categoryDb);
 	}
 
 	@Override
@@ -70,11 +71,14 @@ public class DefaultCategoryService implements CategoryService{
 		
 		CategoryModel categoryFound= categoryRepository.findById(id).orElseThrow(() -> new CJNotFoundException(CustomCodeException.CODE_404, MessageFormat.format("Category with id [{0}] not Found", id)));
 		
-		categoryFound.setName(categoryDTO.getName());		
+		categoryFound.setName(categoryDTO.getName());
+		CategoryModel parent = resolveParent(categoryDTO.getParentId());
+		validateParent(categoryFound, parent);
+		categoryFound.setParent(parent);
 		
 		CategoryModel categoryUpdated= categoryRepository.save(categoryFound);
 		
-		return modelMapper.map(categoryUpdated, ResponseCategoryDTO.class);
+		return toResponse(categoryUpdated);
 	}
 
 	@Override
@@ -83,6 +87,31 @@ public class DefaultCategoryService implements CategoryService{
 		Assert.notNull(id, "id cannot be null");
 		CategoryModel categoryFound = categoryRepository.findById(id).orElseThrow(() -> new CJNotFoundException(CustomCodeException.CODE_404, MessageFormat.format("Category with id [{0}] not Found", id)));
 		categoryRepository.delete(categoryFound);
+	}
+
+	private CategoryModel resolveParent(Long parentId) {
+		if (parentId == null) {
+			return null;
+		}
+		return categoryRepository.findById(parentId).orElseThrow(() -> new CJNotFoundException(
+				CustomCodeException.CODE_404,
+				MessageFormat.format("Parent category with id [{0}] not Found", parentId)));
+	}
+
+	private void validateParent(CategoryModel category, CategoryModel parent) {
+		CategoryModel ancestor = parent;
+		while (ancestor != null) {
+			if (category.getId().equals(ancestor.getId())) {
+				throw new IllegalArgumentException("A category cannot be its own parent or descendant");
+			}
+			ancestor = ancestor.getParent();
+		}
+	}
+
+	private ResponseCategoryDTO toResponse(CategoryModel category) {
+		ResponseCategoryDTO response = modelMapper.map(category, ResponseCategoryDTO.class);
+		response.setParentId(category.getParent() == null ? null : category.getParent().getId());
+		return response;
 	}
 
 }

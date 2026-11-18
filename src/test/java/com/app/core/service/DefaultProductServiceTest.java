@@ -29,6 +29,7 @@ import com.app.core.entity.model.PriceModel;
 import com.app.core.entity.model.ProductModel;
 import com.app.core.exception.CJNotFoundException;
 import com.app.core.repository.ProductRepository;
+import com.app.core.repository.CategoryRepository;
 import com.app.core.service.impl.DefaultProductService;
 
 public class DefaultProductServiceTest {
@@ -37,6 +38,7 @@ public class DefaultProductServiceTest {
 	private static final String PRODUCT_CODE = "PR001";
 
 	private ProductRepository productRepository;
+	private CategoryRepository categoryRepository;
 	private ModelMapper modelMapper;
 	private DefaultProductService productService;
 
@@ -46,8 +48,9 @@ public class DefaultProductServiceTest {
 	@BeforeEach
 	void setUp() {
 		productRepository = mock(ProductRepository.class);
+		categoryRepository = mock(CategoryRepository.class);
 		modelMapper = mock(ModelMapper.class);
-		productService = new DefaultProductService(productRepository, modelMapper);
+		productService = new DefaultProductService(productRepository, categoryRepository, modelMapper);
 
 		productModel = ProductModel.builder().id(1L).code(PRODUCT_CODE).name("Laptop").build();
 		responseProductDTO = new ResponseProductDTO();
@@ -72,13 +75,16 @@ public class DefaultProductServiceTest {
 	@DisplayName("Get all case with category id as page")
 	public void getAllCaseWithCategoryIdAsPage() {
 		Pageable pageable = PageRequest.of(0, 10);
-		Mockito.when(productRepository.findProductByCategoryId(CATEGORY_ID, pageable))
+		List<Long> categoryTreeIds = List.of(CATEGORY_ID, 2L, 3L);
+		Mockito.when(categoryRepository.findCategoryTreeIds(CATEGORY_ID)).thenReturn(categoryTreeIds);
+		Mockito.when(productRepository.findProductsByCategoryIds(categoryTreeIds, pageable))
 				.thenReturn(new PageImpl<>(List.of(productModel)));
 		Mockito.when(modelMapper.map(productModel, ResponseProductDTO.class)).thenReturn(responseProductDTO);
 
 		Page<ResponseProductDTO> result = productService.getAll(CATEGORY_ID, pageable);
 
 		assertEquals(1, result.getTotalElements());
+		verify(productRepository).findProductsByCategoryIds(categoryTreeIds, pageable);
 	}
 
 	@Test
@@ -95,12 +101,26 @@ public class DefaultProductServiceTest {
 	@Test
 	@DisplayName("Get all case with category id as list")
 	public void getAllCaseWithCategoryIdAsList() {
-		Mockito.when(productRepository.findProductByCategoryId(CATEGORY_ID)).thenReturn(List.of(productModel));
+		List<Long> categoryTreeIds = List.of(CATEGORY_ID, 2L, 3L);
+		Mockito.when(categoryRepository.findCategoryTreeIds(CATEGORY_ID)).thenReturn(categoryTreeIds);
+		Mockito.when(productRepository.findProductsByCategoryIds(categoryTreeIds)).thenReturn(List.of(productModel));
 		Mockito.when(modelMapper.map(productModel, ResponseProductDTO.class)).thenReturn(responseProductDTO);
 
 		List<ResponseProductDTO> result = productService.getAll(CATEGORY_ID);
 
 		assertEquals(1, result.size());
+		verify(productRepository).findProductsByCategoryIds(categoryTreeIds);
+	}
+
+	@Test
+	@DisplayName("Get products for category returns empty when category does not exist")
+	public void getAllForUnknownCategoryReturnsEmptyList() {
+		Mockito.when(categoryRepository.findCategoryTreeIds(99L)).thenReturn(List.of());
+
+		List<ResponseProductDTO> result = productService.getAll(99L);
+
+		assertTrue(result.isEmpty());
+		verify(productRepository, never()).findAll();
 	}
 
 	@Test

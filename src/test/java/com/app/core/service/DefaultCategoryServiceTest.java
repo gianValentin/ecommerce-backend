@@ -4,6 +4,7 @@ import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertThrows;
 import static org.mockito.Mockito.mock;
 import static org.mockito.Mockito.verify;
+import static org.junit.jupiter.api.Assertions.assertSame;
 
 import java.util.List;
 import java.util.Optional;
@@ -106,6 +107,22 @@ public class DefaultCategoryServiceTest {
 	}
 
 	@Test
+	@DisplayName("Save case success as subcategory")
+	public void saveCaseSuccessAsSubcategory() {
+		CategoryModel parent = CategoryModel.builder().id(10L).name("Electronics").build();
+		SaveCategoryDTO saveCategoryDTO = new SaveCategoryDTO("Laptops", 10L);
+		Mockito.when(categoryRepository.findById(10L)).thenReturn(Optional.of(parent));
+		Mockito.when(modelMapper.map(saveCategoryDTO, CategoryModel.class)).thenReturn(categoryModel);
+		Mockito.when(categoryRepository.save(categoryModel)).thenReturn(categoryModel);
+		Mockito.when(modelMapper.map(categoryModel, ResponseCategoryDTO.class)).thenReturn(responseCategoryDTO);
+
+		categoryService.save(saveCategoryDTO);
+
+		assertSame(parent, categoryModel.getParent());
+		assertEquals(10L, responseCategoryDTO.getParentId());
+	}
+
+	@Test
 	@DisplayName("Update case success")
 	public void updateCaseSuccess() {
 		UpdateCategoryDTO updateCategoryDTO = new UpdateCategoryDTO("clothing");
@@ -117,6 +134,17 @@ public class DefaultCategoryServiceTest {
 		categoryService.update(updateCategoryDTO, 1L);
 
 		assertEquals("clothing", categoryModel.getName());
+	}
+
+	@Test
+	@DisplayName("Update case rejects moving category under its descendant")
+	public void updateCaseRejectsCircularHierarchy() {
+		CategoryModel child = CategoryModel.builder().id(2L).name("Gaming").parent(categoryModel).build();
+		UpdateCategoryDTO updateCategoryDTO = new UpdateCategoryDTO("Electronics", 2L);
+		Mockito.when(categoryRepository.findById(1L)).thenReturn(Optional.of(categoryModel));
+		Mockito.when(categoryRepository.findById(2L)).thenReturn(Optional.of(child));
+
+		assertThrows(IllegalArgumentException.class, () -> categoryService.update(updateCategoryDTO, 1L));
 	}
 
 	@Test

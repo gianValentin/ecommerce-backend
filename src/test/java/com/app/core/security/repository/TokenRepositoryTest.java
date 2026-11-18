@@ -31,6 +31,7 @@ import com.app.core.security.entity.TokenType;
 public class TokenRepositoryTest {
 
 	private static final String VALID_TOKEN = "valid-token";
+	private static final String EXPIRED_TOKEN = "expired-token";
 	private static final String REVOKED_TOKEN = "revoked-token";
 
 	@Autowired
@@ -62,10 +63,18 @@ public class TokenRepositoryTest {
 				.build());
 
 		testEntityManager.persist(Token.builder()
-				.token(REVOKED_TOKEN)
+				.token(EXPIRED_TOKEN)
 				.tokenType(TokenType.BEARER)
 				.user(user)
 				.expired(true)
+				.revoked(false)
+				.build());
+
+		testEntityManager.persist(Token.builder()
+				.token(REVOKED_TOKEN)
+				.tokenType(TokenType.BEARER)
+				.user(user)
+				.expired(false)
 				.revoked(true)
 				.build());
 	}

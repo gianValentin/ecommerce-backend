@@ -9,4 +9,9 @@ import lombok.NoArgsConstructor;
 @Data
 public class UpdateCategoryDTO {
 	private String name;
+	private Long parentId;
+
+	public UpdateCategoryDTO(String name) {
+		this.name = name;
+	}
 }

@@ -15,3 +15,18 @@ This project that contains the core with the technologies of java 21, spring boo
 - Implement the new version spring boot 3 and spring framework 6
 - Implement the new version spring security 6 using JWT
 - Implement token refresh architecture in security
+
+## Authentication configuration
+
+Production must provide a newly generated Base64 JWT key through `JWT_SECRET_KEY` (at least 256 bits), and must rotate the key previously committed in older revisions. Never use the development key from the H2 profile in production.
+
+Configure `PROD_ALLOWED_ORIGINS` with an explicit comma-separated list of frontend origins, such as `https://admin.example.com`. Production cookies require HTTPS (`AUTH_COOKIE_SECURE=true`). Public registration is disabled by default in the PostgreSQL profile; set `AUTH_REGISTRATION_ENABLED=true` only if customer self-registration is part of the deployment.
+
+The authentication contracts are:
+
+- `POST /api/v1/auth/login` accepts `{ "username", "password", "remember" }` and returns `{ "access_token", "username", "role" }`. The refresh token is issued only as an HttpOnly `refresh_token` cookie.
+- `POST /api/v1/auth/refresh-token` accepts the refresh cookie, requires an allowed `Origin`, rotates the refresh token, and returns a new access token.
+- `POST /api/v1/auth/logout` revokes the active token session and clears the refresh cookie; it also requires an allowed `Origin`.
+- `POST /api/v1/auth/register` keeps the existing registration DTO and returns the same access-token response. New accounts are always assigned `USER`; the endpoint is disabled unless registration is explicitly enabled.
+
+The access token expires after 15 minutes by default. Refresh tokens are rotated and stored hashed in the token table. The `remember` login option controls whether the HttpOnly refresh cookie is persistent or browser-session scoped.

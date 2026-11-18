@@ -12,6 +12,7 @@ import java.util.List;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.mockito.Mockito;
+import org.mockito.ArgumentCaptor;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.autoconfigure.web.servlet.WebMvcTest;
 import org.springframework.boot.test.mock.mockito.MockBean;
@@ -111,6 +112,29 @@ public class CategoryControllerTest {
 						.content(objectMapper.writeValueAsString(saveCategoryDTO)))
 				.andExpect(status().isCreated())
 				.andExpect(MockMvcResultMatchers.jsonPath("$.name").value("furniture"));
+	}
+
+	@Test
+	@WithMockUser
+	@DisplayName("Save case accepts a parent category id")
+	public void saveCaseAcceptsParentCategoryId() throws Exception {
+		SaveCategoryDTO request = new SaveCategoryDTO("Laptops", 5L);
+		ResponseCategoryDTO response = new ResponseCategoryDTO();
+		response.setId(6L);
+		response.setName("Laptops");
+		response.setParentId(5L);
+		Mockito.when(categoryService.save(Mockito.any(SaveCategoryDTO.class))).thenReturn(response);
+		ArgumentCaptor<SaveCategoryDTO> requestCaptor = ArgumentCaptor.forClass(SaveCategoryDTO.class);
+
+		mockMvc.perform(post(path)
+					.with(csrf())
+					.contentType(MediaType.APPLICATION_JSON)
+					.content(objectMapper.writeValueAsString(request)))
+				.andExpect(status().isCreated())
+				.andExpect(MockMvcResultMatchers.jsonPath("$.parentId").value(5));
+
+		Mockito.verify(categoryService).save(requestCaptor.capture());
+		org.junit.jupiter.api.Assertions.assertEquals(5L, requestCaptor.getValue().getParentId());
 	}
 
 	@Test
